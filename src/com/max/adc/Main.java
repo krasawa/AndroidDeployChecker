@@ -1,3 +1,7 @@
+package com.max.adc;
+
+import com.max.adc.controller.AppDeployChecker;
+
 /**
  * Created with IntelliJ IDEA.
  * Developer: Max Marusetchenko

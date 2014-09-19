@@ -1,3 +1,7 @@
+package com.max.adc.controller;
+
+import com.max.adc.util.Debug;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.Executors;
@@ -14,28 +18,40 @@ import java.util.concurrent.TimeUnit;
 public class AppDeployChecker {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-                                        private Builder builder;
+    private ScheduledFuture<?> checkerHandle;
+    private Builder builder;
+
     private AppDeployChecker(Builder builder) {
         this.builder = builder;
     }
 
     public void check() {
+        Debug.print("Waiting");
+
         final Runnable runnable = new Runnable() {
             public void run() {
                 if (checkAppIsDeployed()) {
-                    System.out.println("App " + builder.appName + " is deployed");
+                    String message = "App " + builder.appName + " is deployed";
+                    Debug.println(message);
+                    stopChecking();
                 } else {
-                    System.out.print(".");
+                    Debug.print(".");
                 }
             }
         };
-        final ScheduledFuture<?> checkerHandle = scheduler.scheduleAtFixedRate(runnable, 0, builder.checkRate, TimeUnit.SECONDS);
+
+        checkerHandle = scheduler.scheduleAtFixedRate(runnable, 0, builder.checkRate, TimeUnit.SECONDS);
 
         scheduler.schedule(new Runnable() {
             public void run() {
-                checkerHandle.cancel(true);
+                Debug.print("Time to wait has out");
+                stopChecking();
             }
         }, builder.timeToWait, TimeUnit.SECONDS);
+    }
+
+    private void stopChecking() {
+        checkerHandle.cancel(true);
     }
 
     private boolean checkAppIsDeployed() {
